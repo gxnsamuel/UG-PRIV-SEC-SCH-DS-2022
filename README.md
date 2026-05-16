@@ -1,168 +1,176 @@
-# UG-PRIV-SEC-SCH-DS-2022
+# UG-PRIV-SEC-SCH-DS-2022 — Dataset-focused README
 
-Uganda Private Secondary Schools Dataset — 2022
+This README focuses on the dataset(s) used in this repository and how to safely inspect, use, and extend them. It replaces the previous repository README.
 
-This repository contains code, documentation, and resources for the UG-PRIV-SEC-SCH-DS-2022 project, a project focused on privacy, security, and data science practices applied to educational data from Ugandan private secondary schools (2022).
+File path: README.md (repository root) — full-file replacement of the current README.md
+What was removed: The previous README.md (all lines). If you want a diff I can provide unified diff showing old vs new.
 
-IMPORTANT: This repository must NOT contain any personally identifiable information (PII) or raw student-level data. If you need to work with sensitive datasets, keep them out of the repo and use secure storage and access controls.
-
-Repository status
-
-- Maintainer: gxnsamuel
-- Repo: https://github.com/gxnsamuel/UG-PRIV-SEC-SCH-DS-2022
-
-Quick summary (what this README replaces)
-
-- Old short README at root (lines 1–3) has been replaced with this comprehensive professional README.
-- File path updated: README.md (root of repository)
+IMPORTANT: Do NOT store personally identifiable information (PII) or raw student-level data in this repository. Always keep raw sensitive data in secure storage and commit only safe, synthetic, or aggregated datasets.
 
 Table of contents
+- Dataset overview
+- Where the data lives in this repo (paths)
+- Data files and expected formats
+- Data dictionary / schema
+- Data quality checks and recommended preprocessing
+- Privacy-preserving guidance (anonymization & aggregation)
+- How to load the data (examples)
+- Example analyses and quick commands
+- Provenance, licensing & citation
+- Adding or updating dataset files (exact paths to place files)
+- Next steps & how I updated the repo
 
-- Project overview
-- What’s included
-- Directory layout (where to put files)
-- Installation and environment
-- Data handling and privacy guidance
-- Usage examples
-- Reproducible experiments
-- Tests and CI
-- Contributing
-- Code of conduct
-- Security & responsible disclosure
-- License
-- Contact and acknowledgements
+Dataset overview
 
-Project overview
+This repository documents and (optionally) contains a dataset describing Uganda private secondary schools (2022). The dataset is intended to capture school-level attributes (not individual student PII) such as school name, location (district), ownership type, enrollment counts by level, staff counts, pass rates, fees, facilities, and other school-level metadata.
 
-This project documents analyses, preprocessing pipelines, and example code for working with private secondary schools data from Uganda (2022). The emphasis is on demonstrating secure and privacy-preserving data science practices, reproducibility, and clear documentation so that researchers and practitioners can reproduce or adapt the processes without exposing sensitive information.
+Primary goals for the dataset section of this repo:
+- Provide a clear data dictionary so others can understand and reuse the data safely.
+- Provide recommended preprocessing and quality checks for reproducible analysis.
+- Provide privacy guidance and how to create safe synthetic or aggregated derivatives for sharing.
 
-Goals
+Where the data lives in this repo (paths)
+- data/raw/ — raw ingested files (DO NOT commit real PII here if it contains sensitive records)
+  - Example filename: data/raw/ug_private_schools_2022.csv
+- data/processed/ — cleaned, anonymized, aggregated datasets used by notebooks and scripts
+  - Example filename: data/processed/ug_schools_2022_clean.csv
+- data/schema/ — machine-readable schema files and data dictionary (JSON Schema / Parquet schema / CSV schema)
+  - Example filename: data/schema/ug_schools_schema.json
+- data/synthetic/ — synthetic datasets derived from real data for examples and public sharing
+  - Example filename: data/synthetic/ug_schools_2022_synthetic.csv
+- notebooks/ and src/ will reference data/processed/ by default
 
-- Provide reusable, well-documented data processing pipelines and analysis notebooks.
-- Demonstrate privacy-preserving techniques (anonymization, pseudonymization, aggregation, k-anonymity checks).
-- Provide templates for threat modelling and compliance considerations when working with educational datasets.
-- Provide reproducible experiments and clear developer and contributor guidance.
+Data files and expected formats
+- Primary format: CSV (comma-separated). UTF-8 encoding recommended.
+- Optionally provide Parquet for large files (faster IO and typed schema).
+- For each dataset include a companion metadata file with:
+  - source: who collected or published the data
+  - date_collected: YYYY-MM-DD
+  - license: license name and URL
+  - fields: list of fields and types
+  - aggregation_level: (school-level, district-level, student-level)
 
-What’s included
+Example metadata file (YAML or JSON) location: data/raw/ug_private_schools_2022.metadata.yaml
 
-- Example data schema and synthetic datasets (if any). If no synthetic datasets are present, see /data/README.md for instructions to create or fetch them securely.
-- Scripts and modules to preprocess and analyze data under /src/ and /scripts/.
-- Notebooks demonstrating EDA and example analyses under /notebooks/.
-- Configuration and example YAML files under /configs/.
-- Tests under /tests/ and CI configuration under /.github/workflows/ (if present).
+Data dictionary / schema
 
-Directory layout (where to put files)
+Create a data dictionary at data/schema/data_dictionary.md or CSV at data/schema/data_dictionary.csv. Below is a recommended template — replace example columns with the actual columns in your dataset.
 
-Place new or edited files in these locations:
+Recommended data dictionary (example rows) — save as data/schema/data_dictionary.csv or docs/DATA_DICTIONARY.md
+- column_name, type, description, example_values, sensitive (yes/no), recommended_action
+- school_id, integer, Unique ID for school (generated), 10001, yes (pseudonymize if derived from govt ID)
+- school_name, string, Official school name, "St. Mary's SS", yes (remove or pseudonymize for public sharing)
+- district, string, Administrative district where the school is located, "Kampala", no
+- sub_county, string, Sub-county or ward, "Nakasero", no
+- ownership_type, categorical, Ownership (Private, GovernmentAided, Community), "Private", no
+- establishment_year, integer, Year the school was established, 1993, no
+- male_enrollment, integer, Number of male students (total enrollment by sex), 250, no
+- female_enrollment, integer, Number of female students (total enrollment by sex), 230, no
+- total_enrollment, integer, Total number of students, 480, no (can be computed)
+- teaching_staff_count, integer, Number of teaching staff, 18, no
+- non_teaching_staff_count, integer, Non-teaching support staff, 6, no
+- avg_exam_score, float, Average national exam score or pass rate, 68.3, no
+- fee_term, float, Term fees in local currency (UGX), 350000, yes (treat carefully)
+- boarding, boolean, Indicates if the school offers boarding facilities, true/false, no
+- facilities, string, Semicolon-separated list of facilities (library;computer_lab;playground), "library;computer_lab", no
+- contact_email, string, Official contact email (DO NOT commit real emails), "info@school.ac.ug", yes (remove)
 
-- README.md — repository root (this file)
-- data/ — dataset placeholders, synthetic datasets, and metadata only (never commit raw PII)
-  - data/README.md — explain dataset sources, formats, and safe access patterns
-- notebooks/ — Jupyter notebooks for exploratory analysis and demo
-- src/ — main Python (or other language) modules and pipeline code
-- scripts/ — runnable helper scripts and entry points
-- configs/ — configuration templates: configs/config.example.yaml
-- tests/ — unit and integration tests
-- docs/ — extended docs, threat models, compliance notes
-- .github/workflows/ — CI definitions (tests, linting, pre-commit)
+If you are unsure of the columns in your dataset I can scan the repository and list CSV headers — tell me if you want me to do that.
 
-Installation and environment
+Data quality checks and recommended preprocessing
 
-Example: Python development environment
+Before analysis, run the following checks and transformations. You can place scripts in src/data_checks.py and call them from scripts/check_data.sh.
 
-1. Clone the repository
+1. Basic integrity checks
+   - Check for missing headers and consistent column counts across rows
+   - Validate datatypes (e.g., year is integer, enrollment counts non-negative)
 
-   git clone https://github.com/gxnsamuel/UG-PRIV-SEC-SCH-DS-2022.git
-   cd UG-PRIV-SEC-SCH-DS-2022
+2. Missing values
+   - Report missing value counts per column
+   - Decide an imputation strategy: median for counts, mean for scores, or domain-specific replacement
+   - For critical identifiers, do NOT impute; instead flag and investigate
 
-2. Create and activate a virtual environment
+3. Range and plausibility checks
+   - Example: total_enrollment == male_enrollment + female_enrollment (allow small discrepancies)
+   - Fee ranges within expected bounds; year_of_establishment <= data_collection_year
 
-   python3 -m venv .venv
-   source .venv/bin/activate  # macOS / Linux
-   .venv\Scripts\Activate    # Windows PowerShell
+4. Duplicates
+   - Deduplicate by stable school identifier (school_id) or by (school_name, district) with fuzzy matching
 
-3. Install dependencies
+5. Data typing and normalization
+   - Normalize categorical values (ownership_type -> standardized set)
+   - Trim whitespace and unify casing for textual fields
 
-   pip install --upgrade pip
-   pip install -r requirements.txt
+6. Create derived fields
+   - total_enrollment, student_teacher_ratio = total_enrollment / teaching_staff_count
 
-If a requirements.txt is missing, inspect src/ and notebooks for used packages and create one.
+Privacy-preserving guidance (anonymization & aggregation)
 
-Configuration and secrets
+- Remove or pseudonymize direct identifiers (school_name, contact_email) prior to public release.
+- For small counts that could re-identify (e.g., a school with only 1 student), aggregate or suppress those rows.
+- Apply k-anonymity or l-diversity checks when releasing disclosive attributes. Tools: ARX (Java), sdcMicro (R), or custom Python implementations.
+- When sharing results, prefer aggregated statistics (district-level averages) over school-level raw rows.
+- Store any mapping from original IDs to pseudonyms in a secure private store; never commit mapping files.
 
-- Do NOT commit secrets to the repository. Use environment variables or a secrets manager.
-- Add example configuration files (configs/config.example.yaml) and add the real config to .gitignore (configs/config.yaml).
+How to load the data (examples)
 
-Data handling and privacy guidance
+Python (pandas) quick examples — recommended to place example scripts in src/examples/load_data.py
 
-- Never store raw student PII in the repository. Use placeholders or synthetic datasets for examples.
-- When processing real data, follow these steps:
-  1. Remove direct identifiers (names, national IDs, contact details).
-  2. Use pseudonymization for linking records if needed (store mapping in a secure store only).
-  3. Apply aggregation or k-anonymity techniques before sharing results publicly.
-  4. Keep a data provenance log and record any transformations applied.
-- See docs/privacy.md for detailed methods and compliance notes (create this file if missing).
+- Read CSV
 
-Usage examples
+  import pandas as pd
+  df = pd.read_csv('data/processed/ug_schools_2022_clean.csv', dtype={'school_id': str})
+  df.info()
+  df.head()
 
-- Run a preprocessing script
+- Read Parquet
 
-  python src/preprocess.py --input data/raw/schools.csv --output data/processed/schools_clean.csv --anonymize
+  df = pd.read_parquet('data/processed/ug_schools_2022_clean.parquet')
 
-- Run a notebook
+- Basic validation example (to run interactively or in tests)
 
-  jupyter lab notebooks/
+  assert 'school_id' in df.columns
+  assert df['total_enrollment'].isnull().sum() < 0.05 * len(df)  # example threshold
 
-- Run a model training example
+Example analyses and quick commands
 
-  python src/train.py --config configs/train.example.yaml
+- Count schools by district
 
-Reproducible experiments
+  df.groupby('district')['school_id'].nunique().sort_values(ascending=False)
 
-- Use configs/* to store experiment parameters and seed values.
-- Use a results/ directory for outputs and add results/ to .gitignore if outputs are large or sensitive.
-- Keep notebooks focused and supported by scripts in src/ for automation.
+- Student–teacher ratio distribution
 
-Tests and CI
+  df['student_teacher_ratio'] = df['total_enrollment'] / df['teaching_staff_count']
+  df['student_teacher_ratio'].describe()
 
-- Add unit tests under /tests and run with pytest:
+- Top 10 schools by average exam score
 
-  pip install -r requirements-dev.txt
-  pytest -q
+  df.sort_values('avg_exam_score', ascending=False).head(10)
 
-- Recommended CI: GitHub Actions workflow at .github/workflows/ci.yml that runs tests and linters on push and PR.
+Provenance, licensing & citation
 
-Contributing
+- Each dataset file should include companion metadata with source, collection method, collection date, and license.
+- If the dataset is compiled from government or public sources cite the source (Ministry of Education, national surveys, etc.).
+- Choose an appropriate license for derived datasets. If you are sharing only aggregated or synthetic data, consider Creative Commons (CC BY) or similar.
 
-- Fork the repo and open a pull request. Use feature branches named feature/<short-desc> or fix/<short-desc>.
-- Include tests for new functionality.
-- Follow code style (e.g., black, flake8) and add pre-commit hooks (.pre-commit-config.yaml).
-- Update docs/ and CHANGELOG.md for notable changes.
+Adding or updating dataset files (exact paths to place files)
 
-Code of conduct
+When adding or updating data, follow these exact placement rules so scripts and notebooks can find them:
+- Put raw ingests here: data/raw/<your-filename>.csv
+  - Example: data/raw/ug_private_schools_2022.csv
+- Place cleaned/anonymized outputs here: data/processed/<your-filename>.csv
+  - Example: data/processed/ug_schools_2022_clean.csv
+- Put schema and data dictionary here: data/schema/data_dictionary.csv and data/schema/ug_schools_schema.json
+- Put synthetic public versions here: data/synthetic/ug_schools_2022_synthetic.csv
 
-- Add a CODE_OF_CONDUCT.md file to the repo root to set expectations for contributor behavior.
+If you want scripts to automatically discover the most recent processed file, I can add a small helper script src/find_latest_dataset.py that returns the latest file in data/processed/.
 
-Security & responsible disclosure
+Notes for maintainers — lines removed and replaced
+- Previous file: README.md (previous content replaced entirely). Previous BlobSha: 94ad9f2f774b1dab066dcaa885c11bf57d8d7f67
 
-- Do not commit secrets or raw sensitive data.
-- If you discover a security issue, open a private issue labeled SECURITY or contact the maintainer directly. Provide reproduction steps and suggested mitigations.
+Next steps I will take if you want
+- Add data/schema/data_dictionary.csv with the exact columns from the dataset (I can scan CSV headers and populate the dictionary).
+- Add src/data_checks.py and scripts/check_data.sh with the checks listed above.
+- Add a sample synthetic data generation script in data/synthetic/generate_synthetic.py.
 
-License
-
-- Add an explicit LICENSE file at the repo root. Common choices: MIT, Apache-2.0. Choose one and include it.
-
-Contact and maintainers
-
-- Maintainer: gxnsamuel (github.com/gxnsamuel)
-- Repo URL: https://github.com/gxnsamuel/UG-PRIV-SEC-SCH-DS-2022
-
-Acknowledgements
-
-- List any third-party datasets, libraries, or contributors in an ACKNOWLEDGEMENTS.md file.
-
-Next steps I performed
-
-- I replaced the short README (previously 3 lines) with this full professional README at path: README.md in the repository root.
-
-If you want smaller or different sections, or want me to also add templates (CONTRIBUTING.md, CODE_OF_CONDUCT.md, .github/workflows/ci.yml, configs/config.example.yaml, docs/privacy.md), tell me which ones and I will add them and indicate file paths and exact insertion places.
+Tell me which next step you want and I will add the files and show where to place them with exact filenames and content.
